@@ -13,24 +13,38 @@ export function createTray() {
 
   tray = new Tray(path.join(app.getAppPath(), 'resources/clipboard.png'))
 
-  const menu = Menu.buildFromTemplate([
-    {
-      label: 'Show',
-      click: () => {
-        const win = getWindow()
-        if (!win) return
-
-        if (win.isMinimized()) win.restore()
-        win.show()
-        win.focus()
-      }
-    },
-    { type: 'separator' },
-    { label: 'Quit', click: () => app.quit() }
-  ])
-
   tray.setToolTip('Clipboard Manager')
-  tray.setContextMenu(menu)
+
+  tray.on('click', () => {
+    const win = getWindow?.()
+    if (!win) return
+
+    if (win.isVisible()) {
+      win.hide()
+    } else {
+      win.show()
+      win.focus()
+    }
+  })
+
+  tray.on('right-click', () => {
+    const menu = Menu.buildFromTemplate([
+      {
+        label: 'Show',
+        click: () => {
+          const win = getWindow()
+          if (!win) return
+
+          if (win.isMinimized()) win.restore()
+          win.show()
+          win.focus()
+        }
+      },
+      { type: 'separator' },
+      { label: 'Quit', click: () => app.quit() }
+    ])
+    tray?.popUpContextMenu(menu)
+  })
 
   return tray
 }
