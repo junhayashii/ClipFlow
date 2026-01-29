@@ -5,6 +5,7 @@ import icon from '../../resources/icon.png?asset'
 
 import { getSettings, updateSettings } from './settings'
 import { createTray, destroyTray, initTray } from './tray'
+import { loadHistory, saveHistory } from './historyStore'
 
 // ==========================
 // Window 管理
@@ -102,7 +103,7 @@ app.on('window-all-closed', () => {
 // Clipboard 監視 & 履歴
 // ==========================
 const MAX_HISTORY = 20
-let history: string[] = []
+let history: string[] = loadHistory()
 let lastText = ''
 
 setInterval(() => {
@@ -118,6 +119,8 @@ setInterval(() => {
     history = history.slice(0, MAX_HISTORY)
   }
 
+  saveHistory(history)
+
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send('clipboard:history', history)
   })
@@ -130,6 +133,10 @@ ipcMain.handle('clipboard:readText', () => clipboard.readText())
 
 ipcMain.handle('clipboard:writeText', (_, text: string) => {
   clipboard.writeText(text)
+
+  history = history.filter((item) => item !== text)
+  history.unshift(text)
+  saveHistory(history)
 })
 
 ipcMain.handle('settings:get', () => {
