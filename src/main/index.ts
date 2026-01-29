@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 import { getSettings, updateSettings } from './settings'
 import { createTray, destroyTray, initTray } from './tray'
 import { loadHistory, saveHistory } from './historyStore'
+import { showClipboardMenu } from './clipboardMenu'
 
 // ==========================
 // Window 管理
@@ -79,6 +80,10 @@ app.whenReady().then(() => {
   // tray に window 操作を渡す
   initTray(() => win)
 
+  globalShortcut.register('Command+Shift+V', () => {
+    showClipboardMenu(history)
+  })
+
   if (getSettings().enableTray) {
     createTray()
     if (app.dock) app.dock.hide()
@@ -97,6 +102,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
 })
 
 // ==========================
