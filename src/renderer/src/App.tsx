@@ -3,15 +3,24 @@ import { MainLayout } from './layouts/MainLayout'
 import HistoryPage from './pages/HistoryPage'
 import BookmarkPage from './pages/BookmarkPage'
 import SettingsPage from './pages/SettingsPage'
-import type { Page } from './types'
+import type { ClipboardItem, Page } from './types'
+import { timeStamp } from 'console'
 
 function App(): React.JSX.Element {
   const [page, setPage] = useState<Page>('history')
-  const [history, setHistory] = useState<string[]>([])
+  const [history, setHistory] = useState<ClipboardItem[]>([])
   const [enableTray, setEnableTray] = useState(true)
 
   useEffect(() => {
-    window.clipboardApi.onHistory(setHistory)
+    window.clipboardApi.onHistory((items: string[]) => {
+      setHistory(
+        items.map((content, i) => ({
+          id: `${Date.now()}-${i}`,
+          content,
+          timestamp: Date.now()
+        }))
+      )
+    })
     window.settingsApi.get().then((s) => setEnableTray(s.enableTray))
   }, [])
 
@@ -25,9 +34,8 @@ function App(): React.JSX.Element {
   return (
     <MainLayout current={page} onNavigate={setPage}>
       {page === 'history' && (
-        <HistoryPage history={history} onSelect={(text) => window.clipboardApi.writeText(text)} />
+        <HistoryPage items={history} onCopy={(text) => window.clipboardApi.writeText(text)} />
       )}
-
       {page === 'bookmark' && <BookmarkPage />}
       {page === 'settings' && <SettingsPage />}
     </MainLayout>

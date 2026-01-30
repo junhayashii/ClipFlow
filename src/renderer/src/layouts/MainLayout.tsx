@@ -17,7 +17,7 @@ export function MainLayout({
       <Sidebar current={current} onNavigate={onNavigate} />
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-white dark:bg-neutral-800 p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto bg-white p-6">{children}</main>
     </div>
   )
 }
