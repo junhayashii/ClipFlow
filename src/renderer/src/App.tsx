@@ -1,8 +1,12 @@
-import electronLogo from './assets/electron.svg'
-
 import { useState, useEffect } from 'react'
+import { MainLayout } from './layouts/MainLayout'
+import HistoryPage from './pages/HistoryPage'
+import BookmarkPage from './pages/BookmarkPage'
+import SettingsPage from './pages/SettingsPage'
+import type { Page } from './types'
 
 function App(): React.JSX.Element {
+  const [page, setPage] = useState<Page>('history')
   const [history, setHistory] = useState<string[]>([])
   const [enableTray, setEnableTray] = useState(true)
 
@@ -19,35 +23,14 @@ function App(): React.JSX.Element {
   }
 
   return (
-    <>
-      <img alt="logo" className="logo" src={electronLogo} />
-      <div className="creator">Powered by electron-vite</div>
-      <div className="text">
-        Build an Electron app with <span className="react">React</span>
-        &nbsp;and <span className="ts">TypeScript</span>
-      </div>
-      <p className="tip">
-        Please try pressing <code>F12</code> to open the devTool
-      </p>
-      <label>
-        <input type="checkbox" checked={enableTray} onChange={toggleTray} />
-        Enable Tray
-      </label>
-      <div style={{ padding: 16 }}>
-        <h3>Clipboard</h3>
-        <ul>
-          {history.map((item, i) => (
-            <li
-              key={i}
-              onClick={() => window.clipboardApi.writeText(item)}
-              style={{ cursor: 'pointer', borderBottom: '1px solid #ddd', padding: '8px 0' }}
-            >
-              <pre style={{ whiteSpace: 'pre-wrap' }}>{item}</pre>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </>
+    <MainLayout current={page} onNavigate={setPage}>
+      {page === 'history' && (
+        <HistoryPage history={history} onSelect={(text) => window.clipboardApi.writeText(text)} />
+      )}
+
+      {page === 'bookmark' && <BookmarkPage />}
+      {page === 'settings' && <SettingsPage />}
+    </MainLayout>
   )
 }
 
