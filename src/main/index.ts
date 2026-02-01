@@ -148,6 +148,10 @@ ipcMain.handle('clipboard:writeText', (_, text: string) => {
   saveHistory(history)
 })
 
+ipcMain.handle('clipboard:getHistory', () => {
+  return history
+})
+
 ipcMain.handle('settings:get', () => {
   return getSettings()
 })

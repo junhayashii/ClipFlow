@@ -24,8 +24,8 @@ export default function HistoryPage({ items, onCopy }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200
-               bg-white dark:bg-neutral-800
-               text-slate-900 dark:text-slate-100
+               bg-white
+               text-slate-900
                placeholder:text-slate-400
                focus:outline-none focus:ring-2 focus:ring-sky-500/50"
         />
@@ -35,10 +35,10 @@ export default function HistoryPage({ items, onCopy }: Props) {
         {filteredItems.map((item) => (
           <div
             key={item.id}
-            className="group bg-white dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 rounded-xl p-4 hover:shadow transition"
+            className="group bg-white dark:bg-neutral-800 border border-slate-200 rounded-xl p-4 hover:shadow transition"
           >
             <div className="flex justify-between items-start gap-4">
-              <pre className="text-sm font-mono text-slate-700 dark:text-slate-200 whitespace-pre-wrap line-clamp-3">
+              <pre className="text-sm font-mono text-slate-700 whitespace-pre-wrap line-clamp-3">
                 {item.content}
               </pre>
 

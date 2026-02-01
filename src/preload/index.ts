@@ -28,11 +28,21 @@ contextBridge.exposeInMainWorld('clipboardApi', {
       callback(text)
     })
   },
+
+  getHistory: () => ipcRenderer.invoke('clipboard:getHistory'),
+
   onHistory: (callback: (history: string[]) => void) => {
-    ipcRenderer.on('clipboard:history', (_, history) => {
+    const listener = (_: unknown, history: string[]) => {
       callback(history)
-    })
+    }
+
+    ipcRenderer.on('clipboard:history', listener)
+
+    return () => {
+      ipcRenderer.removeListener('clipboard:history', listener)
+    }
   },
+
   writeText: (text: string) => {
     ipcRenderer.invoke('clipboard:writeText', text)
   }
