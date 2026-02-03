@@ -5,6 +5,7 @@ export interface ClipboardApi {
   onChange(callback: (text: string) => void): void
   onHistory(callback: (history: string[]) => void): void
   writeText(text: string): Promise<void>
+  removeFromHistory(content: string): Promise<string[]>
 }
 
 export interface Settings {

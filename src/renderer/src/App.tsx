@@ -63,6 +63,7 @@ function App(): React.JSX.Element {
           items={history}
           bookmarks={bookmarks}
           onCopy={(text) => window.clipboardApi.writeText(text)}
+          onDelete={(content) => window.clipboardApi.removeFromHistory(content)}
           onAddBookmark={(content, timestamp) => window.bookmarkApi.add(content, timestamp)}
           onRemoveBookmark={(id) => window.bookmarkApi.remove(id)}
         />

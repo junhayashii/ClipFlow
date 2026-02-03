@@ -174,6 +174,15 @@ ipcMain.handle('clipboard:getHistory', () => {
   return history
 })
 
+ipcMain.handle('clipboard:removeFromHistory', (_, content: string) => {
+  history = history.filter((item) => item !== content)
+  saveHistory(history)
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('clipboard:history', history)
+  })
+  return history
+})
+
 // ==========================
 // Bookmarks（履歴のMAX制限なし・永続）
 // ==========================

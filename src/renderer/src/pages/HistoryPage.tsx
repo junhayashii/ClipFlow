@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { ClipboardItem, BookmarkItem } from '../types'
-import { Copy, Star } from 'lucide-react'
+import { Copy, Star, Trash2 } from 'lucide-react'
 
 interface Props {
   items: ClipboardItem[]
   bookmarks: BookmarkItem[]
   onCopy: (text: string) => void
+  onDelete: (content: string) => void
   onAddBookmark: (content: string, timestamp?: number) => void
   onRemoveBookmark: (id: string) => void
 }
@@ -14,6 +15,7 @@ export default function HistoryPage({
   items,
   bookmarks,
   onCopy,
+  onDelete,
   onAddBookmark,
   onRemoveBookmark
 }: Props) {
@@ -72,6 +74,13 @@ export default function HistoryPage({
                     title="コピー"
                   >
                     <Copy size={16} />
+                  </button>
+                  <button
+                    onClick={() => onDelete(item.content)}
+                    className="text-slate-400 hover:text-red-500"
+                    title="履歴から削除"
+                  >
+                    <Trash2 size={16} />
                   </button>
                 </div>
               </div>

@@ -45,6 +45,10 @@ contextBridge.exposeInMainWorld('clipboardApi', {
 
   writeText: (text: string) => {
     ipcRenderer.invoke('clipboard:writeText', text)
+  },
+
+  removeFromHistory: (content: string) => {
+    return ipcRenderer.invoke('clipboard:removeFromHistory', content)
   }
 })
 

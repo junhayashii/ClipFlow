@@ -4,11 +4,9 @@ declare global {
   interface ClipboardApi {
     readText: () => Promise<string>
     writeText: (text: string) => Promise<void>
-
-    // 👇 これを追加
     getHistory: () => Promise<string[]>
-
     onHistory: (callback: (history: string[]) => void) => () => void
+    removeFromHistory: (content: string) => Promise<string[]>
   }
 
   interface Window {
