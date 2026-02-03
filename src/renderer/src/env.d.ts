@@ -17,5 +17,11 @@ declare global {
       get: () => Promise<{ enableTray: boolean }>
       update: (partial: { enableTray?: boolean }) => Promise<{ enableTray: boolean }>
     }
+    bookmarkApi: {
+      get: () => Promise<{ id: string; content: string; timestamp: number }[]>
+      add: (content: string, timestamp?: number) => Promise<{ id: string; content: string; timestamp: number }[]>
+      remove: (id: string) => Promise<{ id: string; content: string; timestamp: number }[]>
+      onBookmarks: (callback: (bookmarks: { id: string; content: string; timestamp: number }[]) => void) => () => void
+    }
   }
 }

@@ -52,3 +52,16 @@ contextBridge.exposeInMainWorld('settingsApi', {
   get: () => ipcRenderer.invoke('settings:get'),
   update: (partial) => ipcRenderer.invoke('settings:update', partial)
 })
+
+contextBridge.exposeInMainWorld('bookmarkApi', {
+  get: () => ipcRenderer.invoke('bookmarks:get'),
+  add: (content: string, timestamp?: number) =>
+    ipcRenderer.invoke('bookmarks:add', content, timestamp),
+  remove: (id: string) => ipcRenderer.invoke('bookmarks:remove', id),
+  onBookmarks: (callback: (bookmarks: { id: string; content: string; timestamp: number }[]) => void) => {
+    const listener = (_: unknown, list: { id: string; content: string; timestamp: number }[]) =>
+      callback(list)
+    ipcRenderer.on('bookmarks:updated', listener)
+    return () => ipcRenderer.removeListener('bookmarks:updated', listener)
+  }
+})

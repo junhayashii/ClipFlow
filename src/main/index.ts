@@ -6,6 +6,12 @@ import icon from '../../resources/icon.png?asset'
 import { getSettings, updateSettings } from './settings'
 import { createTray, destroyTray, initTray } from './tray'
 import { loadHistory, saveHistory } from './historyStore'
+import {
+  loadBookmarks,
+  addBookmark as addBookmarkStore,
+  removeBookmark as removeBookmarkStore,
+  type BookmarkItem
+} from './bookmarkStore'
 import { showClipboardMenu } from './clipboardMenu'
 
 // ==========================
@@ -150,6 +156,31 @@ ipcMain.handle('clipboard:writeText', (_, text: string) => {
 
 ipcMain.handle('clipboard:getHistory', () => {
   return history
+})
+
+// ==========================
+// Bookmarks（履歴のMAX制限なし・永続）
+// ==========================
+let bookmarks: BookmarkItem[] = loadBookmarks()
+
+function sendBookmarksToRenderers(): void {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('bookmarks:updated', bookmarks)
+  })
+}
+
+ipcMain.handle('bookmarks:get', () => bookmarks)
+
+ipcMain.handle('bookmarks:add', (_, content: string, timestamp?: number) => {
+  bookmarks = addBookmarkStore(bookmarks, content, timestamp)
+  sendBookmarksToRenderers()
+  return bookmarks
+})
+
+ipcMain.handle('bookmarks:remove', (_, id: string) => {
+  bookmarks = removeBookmarkStore(bookmarks, id)
+  sendBookmarksToRenderers()
+  return bookmarks
 })
 
 ipcMain.handle('settings:get', () => {

@@ -5,3 +5,9 @@ export interface ClipboardItem {
   content: string
   timestamp: number
 }
+
+export interface BookmarkItem {
+  id: string
+  content: string
+  timestamp: number
+}

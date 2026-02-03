@@ -3,11 +3,12 @@ import { MainLayout } from './layouts/MainLayout'
 import HistoryPage from './pages/HistoryPage'
 import BookmarkPage from './pages/BookmarkPage'
 import SettingsPage from './pages/SettingsPage'
-import type { ClipboardItem, Page } from './types'
+import type { ClipboardItem, BookmarkItem, Page } from './types'
 
 function App(): React.JSX.Element {
   const [page, setPage] = useState<Page>('history')
   const [history, setHistory] = useState<ClipboardItem[]>([])
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([])
   const [enableTray, setEnableTray] = useState(true)
 
   useEffect(() => {
@@ -33,12 +34,17 @@ function App(): React.JSX.Element {
       )
     })
 
-    // ③ settings
+    // ③ ブックマーク取得・購読
+    window.bookmarkApi.get().then(setBookmarks)
+    const unsubBookmarks = window.bookmarkApi.onBookmarks(setBookmarks)
+
+    // ④ settings
     window.settingsApi.get().then((s) => setEnableTray(s.enableTray))
 
-    // ④ cleanup（超重要）
+    // ⑤ cleanup（超重要）
     return () => {
       unsubscribe?.()
+      unsubBookmarks?.()
     }
   }, [])
 
@@ -52,9 +58,21 @@ function App(): React.JSX.Element {
   return (
     <MainLayout current={page} onNavigate={setPage}>
       {page === 'history' && (
-        <HistoryPage items={history} onCopy={(text) => window.clipboardApi.writeText(text)} />
+        <HistoryPage
+          items={history}
+          bookmarks={bookmarks}
+          onCopy={(text) => window.clipboardApi.writeText(text)}
+          onAddBookmark={(content, timestamp) => window.bookmarkApi.add(content, timestamp)}
+          onRemoveBookmark={(id) => window.bookmarkApi.remove(id)}
+        />
       )}
-      {page === 'bookmark' && <BookmarkPage />}
+      {page === 'bookmark' && (
+        <BookmarkPage
+          items={bookmarks}
+          onCopy={(text) => window.clipboardApi.writeText(text)}
+          onRemoveBookmark={(id) => window.bookmarkApi.remove(id)}
+        />
+      )}
       {page === 'settings' && <SettingsPage enableTray={enableTray} onToggleTray={toggleTray} />}
     </MainLayout>
   )
