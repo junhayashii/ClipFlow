@@ -16,23 +16,22 @@ const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <h1 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-100">Bookmarks</h1>
-      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-        履歴は最大件数を超えると消えますが、ブックマークは残ります。
-      </p>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Bookmarks</h1>
 
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search bookmarks..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600
+        <div>
+          <input
+            type="text"
+            placeholder="Search bookmarks..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600
                bg-white dark:bg-slate-800
                text-slate-900 dark:text-slate-100
                placeholder:text-slate-400 dark:placeholder:text-slate-500
                focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-        />
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3">

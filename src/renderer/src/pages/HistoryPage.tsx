@@ -28,20 +28,21 @@ export default function HistoryPage({
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <h1 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-100">History</h1>
-
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search history..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">History</h1>
+        <div>
+          <input
+            type="text"
+            placeholder="Search history..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600
                bg-white dark:bg-slate-800
                text-slate-900 dark:text-slate-100
                placeholder:text-slate-400 dark:placeholder:text-slate-500
                focus:outline-none focus:ring-2 focus:ring-sky-500/50"
-        />
+          />
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3">
@@ -57,16 +58,17 @@ export default function HistoryPage({
                   {item.content}
                 </pre>
 
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition">
                   <button
-                    onClick={() => (bookmark ? onRemoveBookmark(bookmark.id) : onAddBookmark(item.content, item.timestamp))}
+                    onClick={() =>
+                      bookmark
+                        ? onRemoveBookmark(bookmark.id)
+                        : onAddBookmark(item.content, item.timestamp)
+                    }
                     className="text-slate-400 hover:text-amber-500"
                     title={bookmark ? 'ブックマークを解除' : 'ブックマークに追加'}
                   >
-                    <Star
-                      size={16}
-                      className={bookmark ? 'fill-amber-500 text-amber-500' : ''}
-                    />
+                    <Star size={16} className={bookmark ? 'fill-amber-500 text-amber-500' : ''} />
                   </button>
                   <button
                     onClick={() => onCopy(item.content)}
