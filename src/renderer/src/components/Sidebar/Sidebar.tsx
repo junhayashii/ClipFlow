@@ -1,4 +1,4 @@
-import { History, Bookmark, Settings } from 'lucide-react'
+import { History, Bookmark, Settings, ClipboardIcon } from 'lucide-react'
 import type { Page } from '../../types'
 import { SidebarItem } from './SidebarItem'
 
@@ -14,9 +14,9 @@ export function Sidebar({
       {/* Logo */}
       <div className="px-6 mb-8 flex items-center gap-2">
         <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center text-white">
-          ⚡
+          <ClipboardIcon />
         </div>
-        <span className="font-bold text-lg">Clipboard</span>
+        <span className="font-bold text-lg">ClipFlow</span>
       </div>
 
       {/* Nav */}
