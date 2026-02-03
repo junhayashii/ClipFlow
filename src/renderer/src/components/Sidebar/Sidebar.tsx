@@ -1,4 +1,4 @@
-import { History, Bookmark, Settings, ClipboardIcon } from 'lucide-react'
+import { History, Bookmark, BarChart3, Settings, ClipboardIcon } from 'lucide-react'
 import type { Page } from '../../types'
 import { SidebarItem } from './SidebarItem'
 
@@ -32,6 +32,12 @@ export function Sidebar({
           label="Bookmarks"
           active={current === 'bookmark'}
           onClick={() => onNavigate('bookmark')}
+        />
+        <SidebarItem
+          icon={BarChart3}
+          label="Statistics"
+          active={current === 'statistics'}
+          onClick={() => onNavigate('statistics')}
         />
         <SidebarItem
           icon={Settings}

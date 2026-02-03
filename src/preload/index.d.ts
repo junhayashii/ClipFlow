@@ -29,6 +29,18 @@ export interface BookmarkApi {
   onBookmarks(callback: (bookmarks: BookmarkItem[]) => void): () => void
 }
 
+export interface Statistics {
+  totalCopy: number
+  totalPaste: number
+  daily: Array<{ date: string; dateLabel: string; copy: number; paste: number }>
+  weekly: Array<{ period: string; copy: number; paste: number }>
+  monthly: Array<{ period: string; copy: number; paste: number }>
+}
+
+export interface StatisticsApi {
+  get(): Promise<Statistics>
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
@@ -36,5 +48,6 @@ declare global {
     clipboardApi: ClipboardApi
     settingsApi: SettingsApi
     bookmarkApi: BookmarkApi
+    statisticsApi: StatisticsApi
   }
 }

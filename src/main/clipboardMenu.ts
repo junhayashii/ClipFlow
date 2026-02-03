@@ -47,7 +47,11 @@ function getAnchorWindow(displayBounds: { x: number; y: number }) {
   return anchorWindow
 }
 
-export function showClipboardMenu(history: string[], win?: BrowserWindow) {
+export function showClipboardMenu(
+  history: string[],
+  win?: BrowserWindow,
+  onPaste?: () => void
+) {
   if (!history.length) return
 
   const template = history.slice(0, 10).map((text) => ({
@@ -55,6 +59,7 @@ export function showClipboardMenu(history: string[], win?: BrowserWindow) {
     click: () => {
       clipboard.writeText(text)
       pasteToFrontmostApp()
+      onPaste?.()
 
       win?.hide()
     }

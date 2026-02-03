@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { MainLayout } from './layouts/MainLayout'
 import HistoryPage from './pages/HistoryPage'
 import BookmarkPage from './pages/BookmarkPage'
+import StatisticsPage from './pages/StatisticsPage'
 import SettingsPage from './pages/SettingsPage'
 import type { ClipboardItem, BookmarkItem, Page } from './types'
 
@@ -73,6 +74,7 @@ function App(): React.JSX.Element {
           onRemoveBookmark={(id) => window.bookmarkApi.remove(id)}
         />
       )}
+      {page === 'statistics' && <StatisticsPage />}
       {page === 'settings' && <SettingsPage enableTray={enableTray} onToggleTray={toggleTray} />}
     </MainLayout>
   )

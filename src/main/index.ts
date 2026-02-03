@@ -12,6 +12,13 @@ import {
   removeBookmark as removeBookmarkStore,
   type BookmarkItem
 } from './bookmarkStore'
+import {
+  loadStatistics,
+  recordCopy as recordCopyStats,
+  recordPaste as recordPasteStats,
+  getStatistics,
+  type DailyData
+} from './statisticsStore'
 import { showClipboardMenu } from './clipboardMenu'
 
 // ==========================
@@ -83,11 +90,15 @@ app.whenReady().then(() => {
   // window 作成
   const win = createWindow()
 
+  statisticsData = loadStatistics()
+
   // tray に window 操作を渡す
   initTray(() => win)
 
   globalShortcut.register('Command+Shift+V', () => {
-    showClipboardMenu(history)
+    showClipboardMenu(history, undefined, () => {
+      statisticsData = recordPasteStats(statisticsData)
+    })
   })
 
   if (getSettings().enableTray) {
@@ -121,6 +132,9 @@ const MAX_HISTORY = 20
 let history: string[] = loadHistory()
 let lastText = ''
 
+// 統計（app ready 後に loadStatistics で初期化）
+let statisticsData: DailyData = {}
+
 setInterval(() => {
   const text = clipboard.readText()
 
@@ -135,6 +149,7 @@ setInterval(() => {
   }
 
   saveHistory(history)
+  statisticsData = recordCopyStats(statisticsData)
 
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send('clipboard:history', history)
@@ -152,6 +167,7 @@ ipcMain.handle('clipboard:writeText', (_, text: string) => {
   history = history.filter((item) => item !== text)
   history.unshift(text)
   saveHistory(history)
+  statisticsData = recordCopyStats(statisticsData)
 })
 
 ipcMain.handle('clipboard:getHistory', () => {
@@ -182,6 +198,8 @@ ipcMain.handle('bookmarks:remove', (_, id: string) => {
   sendBookmarksToRenderers()
   return bookmarks
 })
+
+ipcMain.handle('statistics:get', () => getStatistics(statisticsData))
 
 ipcMain.handle('settings:get', () => {
   return getSettings()

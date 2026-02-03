@@ -53,6 +53,10 @@ contextBridge.exposeInMainWorld('settingsApi', {
   update: (partial) => ipcRenderer.invoke('settings:update', partial)
 })
 
+contextBridge.exposeInMainWorld('statisticsApi', {
+  get: () => ipcRenderer.invoke('statistics:get')
+})
+
 contextBridge.exposeInMainWorld('bookmarkApi', {
   get: () => ipcRenderer.invoke('bookmarks:get'),
   add: (content: string, timestamp?: number) =>

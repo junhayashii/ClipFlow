@@ -1,4 +1,4 @@
-export type Page = 'history' | 'bookmark' | 'settings'
+export type Page = 'history' | 'bookmark' | 'statistics' | 'settings'
 
 export interface ClipboardItem {
   id: string

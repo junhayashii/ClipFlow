@@ -23,5 +23,14 @@ declare global {
       remove: (id: string) => Promise<{ id: string; content: string; timestamp: number }[]>
       onBookmarks: (callback: (bookmarks: { id: string; content: string; timestamp: number }[]) => void) => () => void
     }
+    statisticsApi: {
+      get: () => Promise<{
+        totalCopy: number
+        totalPaste: number
+        daily: Array<{ date: string; dateLabel: string; copy: number; paste: number }>
+        weekly: Array<{ period: string; copy: number; paste: number }>
+        monthly: Array<{ period: string; copy: number; paste: number }>
+      }>
+    }
   }
 }
