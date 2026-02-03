@@ -12,12 +12,12 @@ export function MainLayout({
   current: Page
 }) {
   return (
-    <div className="h-screen w-screen flex bg-slate-50 text-slate-900">
+    <div className="h-screen w-screen flex bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
       {/* Sidebar */}
       <Sidebar current={current} onNavigate={onNavigate} />
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-white p-6">{children}</main>
+      <main className="flex-1 overflow-y-auto bg-white dark:bg-slate-900 p-6">{children}</main>
     </div>
   )
 }

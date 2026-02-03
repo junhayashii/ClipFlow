@@ -18,7 +18,7 @@ export function SidebarItem({
         ${
           active
             ? 'bg-sky-500 text-white shadow'
-            : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
+            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
         }`}
     >
       <Icon size={18} />

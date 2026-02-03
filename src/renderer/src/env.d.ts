@@ -12,8 +12,8 @@ declare global {
   interface Window {
     clipboardApi: ClipboardApi
     settingsApi: {
-      get: () => Promise<{ enableTray: boolean }>
-      update: (partial: { enableTray?: boolean }) => Promise<{ enableTray: boolean }>
+      get: () => Promise<{ enableTray: boolean; darkMode: boolean }>
+      update: (partial: { enableTray?: boolean; darkMode?: boolean }) => Promise<{ enableTray: boolean; darkMode: boolean }>
     }
     bookmarkApi: {
       get: () => Promise<{ id: string; content: string; timestamp: number }[]>

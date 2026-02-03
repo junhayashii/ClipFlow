@@ -16,8 +16,8 @@ const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <h1 className="text-xl font-semibold mb-4">Bookmarks</h1>
-      <p className="text-sm text-slate-500 mb-4">
+      <h1 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-100">Bookmarks</h1>
+      <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
         履歴は最大件数を超えると消えますが、ブックマークは残ります。
       </p>
 
@@ -27,17 +27,17 @@ const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
           placeholder="Search bookmarks..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200
-               bg-white
-               text-slate-900
-               placeholder:text-slate-400
+          className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600
+               bg-white dark:bg-slate-800
+               text-slate-900 dark:text-slate-100
+               placeholder:text-slate-400 dark:placeholder:text-slate-500
                focus:outline-none focus:ring-2 focus:ring-sky-500/50"
         />
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-3">
         {filteredItems.length === 0 ? (
-          <p className="text-sm text-slate-500 py-8 text-center">
+          <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">
             {items.length === 0
               ? '履歴のカードの★をクリックするとここに追加されます'
               : '該当するブックマークがありません'}
@@ -46,10 +46,10 @@ const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
           filteredItems.map((item) => (
             <div
               key={item.id}
-              className="group bg-white dark:bg-neutral-800 border border-slate-200 rounded-xl p-4 hover:shadow transition"
+              className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 hover:shadow transition"
             >
               <div className="flex justify-between items-start gap-4">
-                <pre className="text-sm font-mono text-slate-700 whitespace-pre-wrap line-clamp-3">
+                <pre className="text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap line-clamp-3">
                   {item.content}
                 </pre>
 
@@ -71,7 +71,7 @@ const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
                 </div>
               </div>
 
-              <div className="mt-2 text-[10px] text-slate-400">
+              <div className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(item.timestamp).toLocaleString()}
               </div>
             </div>

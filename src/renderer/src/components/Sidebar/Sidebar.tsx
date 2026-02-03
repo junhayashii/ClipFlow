@@ -10,13 +10,13 @@ export function Sidebar({
   onNavigate: (page: Page) => void
 }) {
   return (
-    <aside className="w-[220px] bg-white border-r border-slate-200 flex flex-col py-6">
+    <aside className="w-[220px] bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 flex flex-col py-6">
       {/* Logo */}
       <div className="px-6 mb-8 flex items-center gap-2">
         <div className="w-8 h-8 bg-sky-500 rounded-lg flex items-center justify-center text-white">
           <ClipboardIcon />
         </div>
-        <span className="font-bold text-lg">ClipFlow</span>
+        <span className="font-bold text-lg text-slate-900 dark:text-slate-100">ClipFlow</span>
       </div>
 
       {/* Nav */}
@@ -47,7 +47,7 @@ export function Sidebar({
         />
       </nav>
 
-      <div className="mt-auto px-6 text-xs text-slate-400">Cmd + Shift + V</div>
+      <div className="mt-auto px-6 text-xs text-slate-400 dark:text-slate-500">Cmd + Shift + V</div>
     </aside>
   )
 }

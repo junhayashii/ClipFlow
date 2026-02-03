@@ -10,6 +10,7 @@ export interface ClipboardApi {
 
 export interface Settings {
   enableTray: boolean
+  darkMode: boolean
 }
 
 export interface SettingsApi {

@@ -1,1 +1,4 @@
 @import 'tailwindcss';
+
+/* クラスでダークモードを切り替え（設定のトグル用） */
+@custom-variant dark (&:where(.dark, .dark *));

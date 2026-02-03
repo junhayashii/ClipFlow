@@ -28,7 +28,7 @@ export default function HistoryPage({
 
   return (
     <div className="p-6 h-full flex flex-col">
-      <h1 className="text-xl font-semibold mb-4">History</h1>
+      <h1 className="text-xl font-semibold mb-4 text-slate-900 dark:text-slate-100">History</h1>
 
       <div className="mb-4">
         <input
@@ -36,10 +36,10 @@ export default function HistoryPage({
           placeholder="Search history..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200
-               bg-white
-               text-slate-900
-               placeholder:text-slate-400
+          className="w-full px-4 py-2 text-sm rounded-lg border border-slate-200 dark:border-slate-600
+               bg-white dark:bg-slate-800
+               text-slate-900 dark:text-slate-100
+               placeholder:text-slate-400 dark:placeholder:text-slate-500
                focus:outline-none focus:ring-2 focus:ring-sky-500/50"
         />
       </div>
@@ -50,10 +50,10 @@ export default function HistoryPage({
           return (
             <div
               key={item.id}
-              className="group bg-white dark:bg-neutral-800 border border-slate-200 rounded-xl p-4 hover:shadow transition"
+              className="group bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl p-4 hover:shadow transition"
             >
               <div className="flex justify-between items-start gap-4">
-                <pre className="text-sm font-mono text-slate-700 whitespace-pre-wrap line-clamp-3">
+                <pre className="text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap line-clamp-3">
                   {item.content}
                 </pre>
 
@@ -85,7 +85,7 @@ export default function HistoryPage({
                 </div>
               </div>
 
-              <div className="mt-2 text-[10px] text-slate-400">
+              <div className="mt-2 text-[10px] text-slate-400 dark:text-slate-500">
                 {new Date(item.timestamp).toLocaleString()}
               </div>
             </div>

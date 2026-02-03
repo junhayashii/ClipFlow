@@ -11,6 +11,7 @@ function App(): React.JSX.Element {
   const [history, setHistory] = useState<ClipboardItem[]>([])
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([])
   const [enableTray, setEnableTray] = useState(true)
+  const [darkMode, setDarkMode] = useState(false)
 
   useEffect(() => {
     // ① 初期履歴を1回取得
@@ -40,7 +41,10 @@ function App(): React.JSX.Element {
     const unsubBookmarks = window.bookmarkApi.onBookmarks(setBookmarks)
 
     // ④ settings
-    window.settingsApi.get().then((s) => setEnableTray(s.enableTray))
+    window.settingsApi.get().then((s) => {
+      setEnableTray(s.enableTray)
+      setDarkMode(s.darkMode)
+    })
 
     // ⑤ cleanup（超重要）
     return () => {
@@ -49,11 +53,22 @@ function App(): React.JSX.Element {
     }
   }, [])
 
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', darkMode)
+  }, [darkMode])
+
   const toggleTray = async () => {
     const updated = await window.settingsApi.update({
       enableTray: !enableTray
     })
     setEnableTray(updated.enableTray)
+  }
+
+  const toggleDarkMode = async () => {
+    const updated = await window.settingsApi.update({
+      darkMode: !darkMode
+    })
+    setDarkMode(updated.darkMode)
   }
 
   return (
@@ -76,7 +91,14 @@ function App(): React.JSX.Element {
         />
       )}
       {page === 'statistics' && <StatisticsPage />}
-      {page === 'settings' && <SettingsPage enableTray={enableTray} onToggleTray={toggleTray} />}
+      {page === 'settings' && (
+        <SettingsPage
+          enableTray={enableTray}
+          darkMode={darkMode}
+          onToggleTray={toggleTray}
+          onToggleDarkMode={toggleDarkMode}
+        />
+      )}
     </MainLayout>
   )
 }

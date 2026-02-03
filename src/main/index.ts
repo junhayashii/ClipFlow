@@ -3,7 +3,7 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
-import { getSettings, updateSettings } from './settings'
+import { getSettings, updateSettings, initSettings } from './settings'
 import { createTray, destroyTray, initTray } from './tray'
 import { loadHistory, saveHistory } from './historyStore'
 import {
@@ -86,6 +86,8 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
+
+  initSettings()
 
   // window 作成
   const win = createWindow()

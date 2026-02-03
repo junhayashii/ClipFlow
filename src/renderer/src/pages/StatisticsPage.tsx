@@ -34,7 +34,7 @@ export default function StatisticsPage() {
 
   if (loading && !stats) {
     return (
-      <div className="p-6 h-full flex items-center justify-center text-slate-500">
+      <div className="p-6 h-full flex items-center justify-center text-slate-500 dark:text-slate-400">
         読み込み中...
       </div>
     )
@@ -53,11 +53,11 @@ export default function StatisticsPage() {
   return (
     <div className="p-6 h-full flex flex-col max-w-4xl">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-semibold">Statistics</h1>
+        <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Statistics</h1>
         <button
           type="button"
           onClick={refresh}
-          className="text-sm text-slate-500 hover:text-sky-600"
+          className="text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400"
         >
           更新
         </button>
@@ -65,32 +65,32 @@ export default function StatisticsPage() {
 
       {/* 総累計 */}
       <section className="mb-8">
-        <h2 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
+        <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
           <Calendar size={16} />
           総累計
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm mb-1">
               <Copy size={14} />
               コピー
             </div>
-            <div className="text-2xl font-bold text-slate-800 tabular-nums">
+            <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 tabular-nums">
               {s.totalCopy.toLocaleString()}
             </div>
           </div>
-          <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-            <div className="flex items-center gap-2 text-slate-500 text-sm mb-1">
+          <div className="bg-slate-50 dark:bg-slate-800 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+            <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-sm mb-1">
               <ClipboardPaste size={14} />
               ペースト
             </div>
-            <div className="text-2xl font-bold text-slate-800 tabular-nums">
+            <div className="text-2xl font-bold text-slate-800 dark:text-slate-200 tabular-nums">
               {s.totalPaste.toLocaleString()}
             </div>
           </div>
-          <div className="bg-sky-50 rounded-xl p-4 border border-sky-100">
-            <div className="text-slate-500 text-sm mb-1">合計</div>
-            <div className="text-2xl font-bold text-sky-700 tabular-nums">
+          <div className="bg-sky-50 dark:bg-sky-900/30 rounded-xl p-4 border border-sky-100 dark:border-sky-800">
+            <div className="text-slate-500 dark:text-slate-400 text-sm mb-1">合計</div>
+            <div className="text-2xl font-bold text-sky-700 dark:text-sky-300 tabular-nums">
               {total.toLocaleString()}
             </div>
           </div>
@@ -99,23 +99,23 @@ export default function StatisticsPage() {
 
       {/* 日別 */}
       <section className="mb-8">
-        <h2 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
+        <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
           <CalendarDays size={16} />
           日別（直近30日）
         </h2>
-        <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+        <div className="border border-slate-200 dark:border-slate-600 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-200">
-                <th className="text-left py-2.5 px-4 font-medium text-slate-600">日付</th>
-                <th className="text-right py-2.5 px-4 font-medium text-slate-600">コピー</th>
-                <th className="text-right py-2.5 px-4 font-medium text-slate-600">ペースト</th>
+              <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600">
+                <th className="text-left py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">日付</th>
+                <th className="text-right py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">コピー</th>
+                <th className="text-right py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">ペースト</th>
               </tr>
             </thead>
             <tbody>
               {s.daily.length === 0 ? (
                 <tr>
-                  <td colSpan={3} className="py-8 text-center text-slate-400">
+                  <td colSpan={3} className="py-8 text-center text-slate-400 dark:text-slate-500">
                     データがありません
                   </td>
                 </tr>
@@ -123,13 +123,13 @@ export default function StatisticsPage() {
                 [...s.daily].reverse().map((row) => (
                   <tr
                     key={row.date}
-                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                    className="border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-700/50"
                   >
-                    <td className="py-2 px-4 text-slate-700">{row.dateLabel}</td>
-                    <td className="py-2 px-4 text-right tabular-nums text-slate-700">
+                    <td className="py-2 px-4 text-slate-700 dark:text-slate-300">{row.dateLabel}</td>
+                    <td className="py-2 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
                       {row.copy}
                     </td>
-                    <td className="py-2 px-4 text-right tabular-nums text-slate-700">
+                    <td className="py-2 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
                       {row.paste}
                     </td>
                   </tr>
@@ -143,23 +143,23 @@ export default function StatisticsPage() {
       {/* 週別・月別 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         <section>
-          <h2 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <CalendarRange size={16} />
             週別（直近12週）
           </h2>
-          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+          <div className="border border-slate-200 dark:border-slate-600 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left py-2.5 px-4 font-medium text-slate-600">週</th>
-                  <th className="text-right py-2.5 px-4 font-medium text-slate-600">コピー</th>
-                  <th className="text-right py-2.5 px-4 font-medium text-slate-600">ペースト</th>
+                <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600">
+                  <th className="text-left py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">週</th>
+                  <th className="text-right py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">コピー</th>
+                  <th className="text-right py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">ペースト</th>
                 </tr>
               </thead>
               <tbody>
                 {s.weekly.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-6 text-center text-slate-400">
+                    <td colSpan={3} className="py-6 text-center text-slate-400 dark:text-slate-500">
                       データがありません
                     </td>
                   </tr>
@@ -167,13 +167,13 @@ export default function StatisticsPage() {
                   [...s.weekly].reverse().map((row, i) => (
                     <tr
                       key={row.period + i}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                      className="border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-700/50"
                     >
-                      <td className="py-2 px-4 text-slate-700">{row.period}</td>
-                      <td className="py-2 px-4 text-right tabular-nums text-slate-700">
+                      <td className="py-2 px-4 text-slate-700 dark:text-slate-300">{row.period}</td>
+                      <td className="py-2 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
                         {row.copy}
                       </td>
-                      <td className="py-2 px-4 text-right tabular-nums text-slate-700">
+                      <td className="py-2 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
                         {row.paste}
                       </td>
                     </tr>
@@ -185,23 +185,23 @@ export default function StatisticsPage() {
         </section>
 
         <section>
-          <h2 className="text-sm font-medium text-slate-500 mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 flex items-center gap-2">
             <CalendarRange size={16} />
             月別（直近12ヶ月）
           </h2>
-          <div className="border border-slate-200 rounded-xl overflow-hidden bg-white">
+          <div className="border border-slate-200 dark:border-slate-600 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200">
-                  <th className="text-left py-2.5 px-4 font-medium text-slate-600">月</th>
-                  <th className="text-right py-2.5 px-4 font-medium text-slate-600">コピー</th>
-                  <th className="text-right py-2.5 px-4 font-medium text-slate-600">ペースト</th>
+                <tr className="bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-600">
+                  <th className="text-left py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">月</th>
+                  <th className="text-right py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">コピー</th>
+                  <th className="text-right py-2.5 px-4 font-medium text-slate-600 dark:text-slate-300">ペースト</th>
                 </tr>
               </thead>
               <tbody>
                 {s.monthly.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="py-6 text-center text-slate-400">
+                    <td colSpan={3} className="py-6 text-center text-slate-400 dark:text-slate-500">
                       データがありません
                     </td>
                   </tr>
@@ -209,13 +209,13 @@ export default function StatisticsPage() {
                   [...s.monthly].reverse().map((row) => (
                     <tr
                       key={row.period}
-                      className="border-b border-slate-100 last:border-0 hover:bg-slate-50/50"
+                      className="border-b border-slate-100 dark:border-slate-700 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-700/50"
                     >
-                      <td className="py-2 px-4 text-slate-700">{row.period}</td>
-                      <td className="py-2 px-4 text-right tabular-nums text-slate-700">
+                      <td className="py-2 px-4 text-slate-700 dark:text-slate-300">{row.period}</td>
+                      <td className="py-2 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
                         {row.copy}
                       </td>
-                      <td className="py-2 px-4 text-right tabular-nums text-slate-700">
+                      <td className="py-2 px-4 text-right tabular-nums text-slate-700 dark:text-slate-300">
                         {row.paste}
                       </td>
                     </tr>
