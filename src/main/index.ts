@@ -135,12 +135,15 @@ app.on('will-quit', () => {
 // ==========================
 // Clipboard 監視 & 履歴
 // ==========================
+// 履歴の最大件数（保存時にも制限）
 const MAX_HISTORY = 20
 let history: ClipboardItem[] = loadHistory()
+// 直前に保存した内容の識別子（連続検出の重複防止）
 let lastSignature = ''
 
 // 統計（app ready 後に loadStatistics で初期化）
 let statisticsData: DailyData = {}
+// 画像とみなす拡張子一覧（ファイルコピー時の判定に使用）
 const IMAGE_EXTENSIONS = new Set([
   '.png',
   '.jpg',
@@ -155,16 +158,19 @@ const IMAGE_EXTENSIONS = new Set([
 ])
 
 function createId() {
+  // 履歴アイテムのユニーク ID
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 function broadcastHistory() {
+  // すべてのレンダラーへ履歴更新を通知
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send('clipboard:history', history)
   })
 }
 
 function addHistoryItem(item: ClipboardItem) {
+  // 同じ内容は重複させず、先頭に移動
   history = history.filter((existing) => !isSameClipboardItem(existing, item))
   history.unshift(item)
 
@@ -176,6 +182,7 @@ function addHistoryItem(item: ClipboardItem) {
 }
 
 function readClipboardString(format: string) {
+  // 文字列形式で取得できない場合は Buffer を UTF-8/UTF-16 で読み取る
   const raw = clipboard.read(format)
   if (raw) return raw
   try {
@@ -194,6 +201,7 @@ function readClipboardString(format: string) {
 }
 
 function normalizeFilePaths(value: unknown): string[] {
+  // bplist などから返る値を string 配列に正規化
   if (Array.isArray(value)) {
     return value.filter((entry): entry is string => typeof entry === 'string')
   }
@@ -204,6 +212,7 @@ function normalizeFilePaths(value: unknown): string[] {
 }
 
 function parseBplistPaths(buffer: Buffer): string[] {
+  // macOS の NSFilenamesPboardType などは bplist 形式で来ることがある
   if (buffer.slice(0, 8).toString('utf8') !== 'bplist00') return []
 
   try {
@@ -219,6 +228,7 @@ function parseBplistPaths(buffer: Buffer): string[] {
 
   if (process.platform !== 'darwin') return []
 
+  // bplist パーサがない場合は plutil で JSON に変換して読む
   const tempPath = join(tmpdir(), `clipflow-${Date.now()}-${Math.random().toString(36).slice(2)}.plist`)
   try {
     fs.writeFileSync(tempPath, buffer)
@@ -239,6 +249,7 @@ function parseBplistPaths(buffer: Buffer): string[] {
 }
 
 function extractFilePathFromBuffer(buffer: Buffer): string {
+  // bplist からのパス抽出を最優先
   const bplistPaths = parseBplistPaths(buffer)
   for (const candidate of bplistPaths) {
     if (candidate.startsWith('file://')) {
@@ -254,6 +265,7 @@ function extractFilePathFromBuffer(buffer: Buffer): string {
     }
   }
 
+  // テキストとして読める場合は URL / パスを拾う
   const candidates = [buffer.toString('utf8'), buffer.toString('utf16le')].map((text) =>
     text.replace(/\u0000/g, '')
   )
@@ -279,6 +291,7 @@ function extractFilePathFromBuffer(buffer: Buffer): string {
 }
 
 function getFilePathFromClipboard(formats: string[]) {
+  // ファイルコピーの代表的なフォーマットからパスを取得
   const candidates = ['public.file-url', 'public.url', 'text/uri-list', 'NSFilenamesPboardType']
   for (const format of candidates) {
     if (!formats.includes(format)) {
@@ -325,6 +338,7 @@ function getFilePathFromClipboard(formats: string[]) {
 }
 
 function loadImageFromFile(filePath: string) {
+  // 画像ファイルを NativeImage に読み込む（パス読み込みが失敗したら Buffer で再試行）
   let image = nativeImage.createFromPath(filePath)
   if (image.isEmpty()) {
     try {
@@ -339,18 +353,21 @@ function loadImageFromFile(filePath: string) {
 }
 
 function formatImageName(timestamp: number) {
+  // ファイル名が無い場合の表示名
   const iso = new Date(timestamp).toISOString().replace('T', ' ').replace('Z', '')
   const safe = iso.replace(/[:]/g, '-')
   return `Image ${safe}`
 }
 
 setInterval(() => {
+  // 1秒ごとにクリップボードを監視（ファイル→画像→テキストの順で優先）
   const formats = clipboard.availableFormats()
   const hasFileFormat = formats.some((format) =>
     ['public.file-url', 'public.url', 'text/uri-list', 'NSFilenamesPboardType'].includes(format)
   )
   const filePath = getFilePathFromClipboard(formats)
   if (filePath) {
+    // ファイルパスが取れる場合は拡張子で画像かどうか判断
     const ext = extname(filePath).toLowerCase()
     if (!IMAGE_EXTENSIONS.has(ext)) {
       const signature = `file:${filePath}`
@@ -365,6 +382,7 @@ setInterval(() => {
       return
     }
 
+    // 画像ファイル名を表示用に保存
     const filename = basename(filePath)
     const dataUrl = fileImage.toDataURL()
     const signature = `image:${dataUrl}`
@@ -387,6 +405,7 @@ setInterval(() => {
     return
   }
   if (hasFileFormat) {
+    // ファイルコピーだがパスが取れない場合はアイコン画像を保存しない
     const signature = `file:unknown:${formats.join(',')}`
     if (signature !== lastSignature) lastSignature = signature
     return
@@ -394,6 +413,7 @@ setInterval(() => {
 
   const image = clipboard.readImage()
   if (!image.isEmpty()) {
+    // 画像データとして取得できる場合（アプリからの画像コピーなど）
     const timestamp = Date.now()
     const dataUrl = image.toDataURL()
     const signature = `image:${dataUrl}`
@@ -418,6 +438,7 @@ setInterval(() => {
 
   const text = clipboard.readText()
   if (!text) return
+  // テキストコピーの場合
   const signature = `text:${text}`
   if (signature === lastSignature) return
   lastSignature = signature
@@ -439,6 +460,7 @@ setInterval(() => {
 ipcMain.handle('clipboard:readText', () => clipboard.readText())
 
 ipcMain.handle('clipboard:writeText', (_, text: string) => {
+  // レンダラーからの「コピー要求」
   if (!text) return
   clipboard.writeText(text)
 
@@ -454,6 +476,7 @@ ipcMain.handle('clipboard:writeText', (_, text: string) => {
 })
 
 ipcMain.handle('clipboard:writeImage', (_, dataUrl: string, filename?: string) => {
+  // レンダラーからの「画像コピー要求」
   if (!dataUrl) return
   const image = nativeImage.createFromDataURL(dataUrl)
   if (image.isEmpty()) return
@@ -478,10 +501,12 @@ ipcMain.handle('clipboard:writeImage', (_, dataUrl: string, filename?: string) =
 })
 
 ipcMain.handle('clipboard:getHistory', () => {
+  // 現在の履歴を返す
   return history
 })
 
 ipcMain.handle('clipboard:removeFromHistory', (_, id: string) => {
+  // ID で履歴から削除
   history = history.filter((item) => item.id !== id)
   saveHistory(history)
   broadcastHistory()
@@ -494,6 +519,7 @@ ipcMain.handle('clipboard:removeFromHistory', (_, id: string) => {
 let bookmarks: BookmarkItem[] = loadBookmarks()
 
 function sendBookmarksToRenderers(): void {
+  // すべてのレンダラーへブックマーク更新を通知
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send('bookmarks:updated', bookmarks)
   })
@@ -502,12 +528,14 @@ function sendBookmarksToRenderers(): void {
 ipcMain.handle('bookmarks:get', () => bookmarks)
 
 ipcMain.handle('bookmarks:add', (_, content: string, timestamp?: number) => {
+  // 追加後に全レンダラーへ通知
   bookmarks = addBookmarkStore(bookmarks, content, timestamp)
   sendBookmarksToRenderers()
   return bookmarks
 })
 
 ipcMain.handle('bookmarks:remove', (_, id: string) => {
+  // 削除後に全レンダラーへ通知
   bookmarks = removeBookmarkStore(bookmarks, id)
   sendBookmarksToRenderers()
   return bookmarks
@@ -516,10 +544,12 @@ ipcMain.handle('bookmarks:remove', (_, id: string) => {
 ipcMain.handle('statistics:get', () => getStatistics(statisticsData))
 
 ipcMain.handle('settings:get', () => {
+  // 設定の読み込み
   return getSettings()
 })
 
 ipcMain.handle('settings:update', (_, partial) => {
+  // 設定の更新とトレイの有効/無効切り替え
   updateSettings(partial)
 
   if (partial.enableTray !== undefined) {

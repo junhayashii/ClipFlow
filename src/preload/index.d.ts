@@ -12,6 +12,7 @@ export type ClipboardItem =
       timestamp: number
     }
 
+// クリップボード API（preload 経由で renderer から利用）
 export interface ClipboardApi {
   readText(): Promise<string>
   onChange(callback: (text: string) => void): void
@@ -21,22 +22,26 @@ export interface ClipboardApi {
   removeFromHistory(id: string): Promise<ClipboardItem[]>
 }
 
+// アプリ設定
 export interface Settings {
   enableTray: boolean
   darkMode: boolean
 }
 
+// 設定 API
 export interface SettingsApi {
   get(): Promise<Settings>
   update(partial: Partial<Settings>): Promise<Settings>
 }
 
+// ブックマークの単位
 export interface BookmarkItem {
   id: string
   content: string
   timestamp: number
 }
 
+// ブックマーク API
 export interface BookmarkApi {
   get(): Promise<BookmarkItem[]>
   add(content: string, timestamp?: number): Promise<BookmarkItem[]>
@@ -44,6 +49,7 @@ export interface BookmarkApi {
   onBookmarks(callback: (bookmarks: BookmarkItem[]) => void): () => void
 }
 
+// 統計データ（レンダラーで表示する形）
 export interface Statistics {
   totalCopy: number
   totalPaste: number
@@ -52,14 +58,17 @@ export interface Statistics {
   monthly: Array<{ period: string; copy: number; paste: number }>
 }
 
+// 統計 API
 export interface StatisticsApi {
   get(): Promise<Statistics>
 }
 
 declare global {
   interface Window {
+    // electron-toolkit 由来の API
     electron: ElectronAPI
     api: unknown
+    // preload で公開する各 API
     clipboardApi: ClipboardApi
     settingsApi: SettingsApi
     bookmarkApi: BookmarkApi

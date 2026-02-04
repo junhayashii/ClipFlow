@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Copy, ClipboardPaste, Calendar, CalendarDays, CalendarRange } from 'lucide-react'
 
+// API から受け取る統計データの形
 interface Statistics {
   totalCopy: number
   totalPaste: number
@@ -10,10 +11,13 @@ interface Statistics {
 }
 
 export default function StatisticsPage() {
+  // 取得した統計データを保持
   const [stats, setStats] = useState<Statistics | null>(null)
+  // 読み込み状態
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // 初回読み込み
     let cancelled = false
     setLoading(true)
     window.statisticsApi.get().then((data) => {
@@ -28,6 +32,7 @@ export default function StatisticsPage() {
   }, [])
 
   const refresh = () => {
+    // 手動で再取得
     setLoading(true)
     window.statisticsApi.get().then(setStats).finally(() => setLoading(false))
   }
@@ -40,6 +45,7 @@ export default function StatisticsPage() {
     )
   }
 
+  // null の場合のフォールバック
   const s = stats ?? {
     totalCopy: 0,
     totalPaste: 0,
@@ -48,6 +54,7 @@ export default function StatisticsPage() {
     monthly: []
   }
 
+  // 画面表示用の合計
   const total = s.totalCopy + s.totalPaste
 
   return (

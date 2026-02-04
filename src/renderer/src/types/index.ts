@@ -1,5 +1,7 @@
+// 画面のルーティング種別
 export type Page = 'history' | 'bookmark' | 'statistics' | 'settings'
 
+// 履歴のアイテム型（テキスト or 画像）
 export type ClipboardItem =
   | { id: string; type: 'text'; content: string; timestamp: number }
   | {
@@ -12,6 +14,7 @@ export type ClipboardItem =
       timestamp: number
     }
 
+// ブックマークのアイテム型
 export interface BookmarkItem {
   id: string
   content: string

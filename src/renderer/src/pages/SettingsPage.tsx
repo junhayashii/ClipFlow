@@ -15,7 +15,7 @@ export default function SettingsPage({
     <div className="p-6 space-y-8 max-w-xl">
       <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-100">Settings</h1>
 
-      {/* Appearance */}
+      {/* 外観設定 */}
       <section>
         <h2 className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">
           Appearance
@@ -42,7 +42,7 @@ export default function SettingsPage({
         </label>
       </section>
 
-      {/* System */}
+      {/* システム設定 */}
       <section>
         <h2 className="text-sm font-semibold mb-2 text-slate-700 dark:text-slate-300">System</h2>
         <label className="flex items-center gap-3 text-slate-700 dark:text-slate-300">

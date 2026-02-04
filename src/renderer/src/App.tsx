@@ -7,6 +7,7 @@ import SettingsPage from './pages/SettingsPage'
 import type { ClipboardItem, BookmarkItem, Page } from './types'
 
 function App(): React.JSX.Element {
+  // 画面切り替えとデータ保持用の state
   const [page, setPage] = useState<Page>('history')
   const [history, setHistory] = useState<ClipboardItem[]>([])
   const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([])
@@ -38,10 +39,12 @@ function App(): React.JSX.Element {
   }, [])
 
   useEffect(() => {
+    // ダークモードは root の class を切り替える
     document.documentElement.classList.toggle('dark', darkMode)
   }, [darkMode])
 
   const toggleTray = async () => {
+    // トレイ表示の ON/OFF を保存して反映
     const updated = await window.settingsApi.update({
       enableTray: !enableTray
     })
@@ -49,6 +52,7 @@ function App(): React.JSX.Element {
   }
 
   const toggleDarkMode = async () => {
+    // ダークモードを保存して反映
     const updated = await window.settingsApi.update({
       darkMode: !darkMode
     })

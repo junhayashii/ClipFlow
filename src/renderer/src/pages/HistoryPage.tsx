@@ -19,7 +19,9 @@ export default function HistoryPage({
   onAddBookmark,
   onRemoveBookmark
 }: Props) {
+  // 検索用の入力値
   const [query, setQuery] = useState('')
+  // テキストは検索対象、画像は検索対象外
   const filteredItems = items.filter((item) => {
     if (!query) return true
     if (item.type === 'text') {
@@ -28,6 +30,7 @@ export default function HistoryPage({
     return false
   })
 
+  // 同じ content を持つブックマークを探す
   const getBookmark = (content: string) => bookmarks.find((b) => b.content === content)
 
   return (
@@ -59,10 +62,12 @@ export default function HistoryPage({
             >
               <div className="flex justify-between items-start gap-4">
                 {item.type === 'text' ? (
+                  // テキスト履歴表示
                   <pre className="text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-pre-wrap line-clamp-3">
                     {item.content}
                   </pre>
                 ) : (
+                  // 画像履歴表示
                   <div className="flex-1 space-y-2">
                     <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 p-2">
                       <img
@@ -79,6 +84,7 @@ export default function HistoryPage({
 
                 <div className="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition">
                   {item.type === 'text' && (
+                    // テキストのみブックマーク可能
                     <button
                       onClick={() =>
                         bookmark

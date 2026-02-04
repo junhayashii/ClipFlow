@@ -9,7 +9,9 @@ interface Props {
 }
 
 const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
+  // 検索用の入力値
   const [query, setQuery] = useState('')
+  // テキストに対する検索フィルタ
   const filteredItems = items.filter((item) =>
     item.content.toLowerCase().includes(query.toLowerCase())
   )
@@ -36,12 +38,14 @@ const BookmarkPage = ({ items, onCopy, onRemoveBookmark }: Props) => {
 
       <div className="flex-1 overflow-y-auto space-y-3">
         {filteredItems.length === 0 ? (
+          // 空表示（検索結果なし or 未登録）
           <p className="text-sm text-slate-500 dark:text-slate-400 py-8 text-center">
             {items.length === 0
               ? '履歴のカードの★をクリックするとここに追加されます'
               : '該当するブックマークがありません'}
           </p>
         ) : (
+          // ブックマーク一覧
           filteredItems.map((item) => (
             <div
               key={item.id}

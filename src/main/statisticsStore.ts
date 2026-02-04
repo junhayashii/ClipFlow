@@ -2,8 +2,10 @@ import { app } from 'electron'
 import { join } from 'path'
 import fs from 'fs'
 
+// 統計データの保存ファイル名
 const FILE_NAME = 'statistics.json'
 
+// 1日のコピー/ペースト回数
 export interface DayCount {
   copy: number
   paste: number
@@ -12,6 +14,7 @@ export interface DayCount {
 /** dateKey -> counts (dateKey = YYYY-MM-DD) */
 type DailyData = Record<string, DayCount>
 
+// UI に渡す統計データの形
 export interface Statistics {
   totalCopy: number
   totalPaste: number
@@ -20,12 +23,15 @@ export interface Statistics {
   monthly: Array<{ period: string; copy: number; paste: number }>
 }
 
-const MAX_DAYS = 365 * 2 // 2年分保持
+// 2年分を上限として保持
+const MAX_DAYS = 365 * 2
 
 function getFilePath(): string {
+  // OSごとの userData 配下に保存
   return join(app.getPath('userData'), FILE_NAME)
 }
 
+// Date -> YYYY-MM-DD
 function toDateKey(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -33,6 +39,7 @@ function toDateKey(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
+// YYYY-MM-DD -> Date
 function parseDateKey(key: string): Date {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(y, m - 1, d)
@@ -47,6 +54,7 @@ export function loadStatistics(): DailyData {
     const data = JSON.parse(raw)
     if (data == null || typeof data !== 'object') return {}
 
+    // 不正な形のデータは捨てつつ復元
     const result: DailyData = {}
     for (const [key, val] of Object.entries(data)) {
       if (typeof key !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(key)) continue
@@ -69,6 +77,7 @@ export function saveStatistics(data: DailyData): void {
   try {
     const filePath = getFilePath()
     const keys = Object.keys(data).sort()
+    // 保持上限を超える場合は最新分だけ保存
     if (keys.length > MAX_DAYS) {
       const toKeep = keys.slice(-MAX_DAYS)
       const trimmed: DailyData = {}
@@ -83,6 +92,7 @@ export function saveStatistics(data: DailyData): void {
 }
 
 export function recordCopy(data: DailyData): DailyData {
+  // 今日のコピー回数を +1
   const key = toDateKey(new Date())
   const cur = data[key] ?? { copy: 0, paste: 0 }
   const next = { ...data, [key]: { ...cur, copy: cur.copy + 1 } }
@@ -91,6 +101,7 @@ export function recordCopy(data: DailyData): DailyData {
 }
 
 export function recordPaste(data: DailyData): DailyData {
+  // 今日のペースト回数を +1
   const key = toDateKey(new Date())
   const cur = data[key] ?? { copy: 0, paste: 0 }
   const next = { ...data, [key]: { ...cur, paste: cur.paste + 1 } }
@@ -115,6 +126,7 @@ function getMonthKey(date: Date): string {
 }
 
 export function getStatistics(data: DailyData): Statistics {
+  // 集計結果を UI 表示用に整形
   const keys = Object.keys(data).sort()
   let totalCopy = 0
   let totalPaste = 0
@@ -123,6 +135,7 @@ export function getStatistics(data: DailyData): Statistics {
     totalPaste += data[k].paste
   })
 
+  // 直近30日の配列
   const lastDays = keys.slice(-30)
   const daily = lastDays.map((date) => {
     const d = parseDateKey(date)
@@ -139,6 +152,7 @@ export function getStatistics(data: DailyData): Statistics {
     }
   })
 
+  // 週次の集計（週の開始日をキーにする）
   const weekMap = new Map<string, DayCount>()
   keys.forEach((date) => {
     const d = parseDateKey(date)

@@ -2,12 +2,10 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { ClipboardItem } from '../main/clipboardTypes'
 
-// Custom APIs for renderer
+// レンダラーに公開する API（安全な範囲だけ）
 const api = {}
 
-// Use `contextBridge` APIs to expose Electron APIs to
-// renderer only if context isolation is enabled, otherwise
-// just add to the DOM global.
+// contextIsolation が有効な場合は contextBridge で公開する
 if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('electron', electronAPI)
@@ -16,12 +14,14 @@ if (process.contextIsolated) {
     console.error(error)
   }
 } else {
+  // contextIsolation が無い場合は window に直接ぶら下げる
   // @ts-ignore (define in dts)
   window.electron = electronAPI
   // @ts-ignore (define in dts)
   window.api = api
 }
 
+// クリップボード関連 API（IPC 経由で main と通信）
 contextBridge.exposeInMainWorld('clipboardApi', {
   readText: () => ipcRenderer.invoke('clipboard:readText'),
   onChange: (callback: (text: string) => void) => {
@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('clipboardApi', {
   getHistory: () => ipcRenderer.invoke('clipboard:getHistory'),
 
   onHistory: (callback: (history: ClipboardItem[]) => void) => {
+    // main からの履歴更新イベントを購読
     const listener = (_: unknown, history: ClipboardItem[]) => {
       callback(history)
     }
@@ -49,6 +50,7 @@ contextBridge.exposeInMainWorld('clipboardApi', {
   },
 
   writeImage: (dataUrl: string, filename?: string) => {
+    // 画像の再コピー（dataUrl を渡す）
     ipcRenderer.invoke('clipboard:writeImage', dataUrl, filename)
   },
 
@@ -57,15 +59,18 @@ contextBridge.exposeInMainWorld('clipboardApi', {
   }
 })
 
+// 設定 API
 contextBridge.exposeInMainWorld('settingsApi', {
   get: () => ipcRenderer.invoke('settings:get'),
   update: (partial) => ipcRenderer.invoke('settings:update', partial)
 })
 
+// 統計 API
 contextBridge.exposeInMainWorld('statisticsApi', {
   get: () => ipcRenderer.invoke('statistics:get')
 })
 
+// ブックマーク API
 contextBridge.exposeInMainWorld('bookmarkApi', {
   get: () => ipcRenderer.invoke('bookmarks:get'),
   add: (content: string, timestamp?: number) =>
