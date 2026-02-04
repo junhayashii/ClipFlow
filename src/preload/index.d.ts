@@ -1,11 +1,24 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 
+export type ClipboardItem =
+  | { id: string; type: 'text'; content: string; timestamp: number }
+  | {
+      id: string
+      type: 'image'
+      dataUrl: string
+      width: number
+      height: number
+      filename?: string
+      timestamp: number
+    }
+
 export interface ClipboardApi {
   readText(): Promise<string>
   onChange(callback: (text: string) => void): void
-  onHistory(callback: (history: string[]) => void): void
+  onHistory(callback: (history: ClipboardItem[]) => void): void
   writeText(text: string): Promise<void>
-  removeFromHistory(content: string): Promise<string[]>
+  writeImage(dataUrl: string, filename?: string): Promise<void>
+  removeFromHistory(id: string): Promise<ClipboardItem[]>
 }
 
 export interface Settings {

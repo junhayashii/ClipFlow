@@ -4,9 +4,51 @@ declare global {
   interface ClipboardApi {
     readText: () => Promise<string>
     writeText: (text: string) => Promise<void>
-    getHistory: () => Promise<string[]>
-    onHistory: (callback: (history: string[]) => void) => () => void
-    removeFromHistory: (content: string) => Promise<string[]>
+    writeImage: (dataUrl: string, filename?: string) => Promise<void>
+    getHistory: () => Promise<
+      (
+        | { id: string; type: 'text'; content: string; timestamp: number }
+        | {
+            id: string
+            type: 'image'
+            dataUrl: string
+            width: number
+            height: number
+            filename?: string
+            timestamp: number
+          }
+      )[]
+    >
+    onHistory: (
+      callback: (
+        history: (
+          | { id: string; type: 'text'; content: string; timestamp: number }
+          | {
+              id: string
+              type: 'image'
+              dataUrl: string
+              width: number
+              height: number
+              filename?: string
+              timestamp: number
+            }
+        )[]
+      ) => void
+    ) => () => void
+    removeFromHistory: (id: string) => Promise<
+      (
+        | { id: string; type: 'text'; content: string; timestamp: number }
+        | {
+            id: string
+            type: 'image'
+            dataUrl: string
+            width: number
+            height: number
+            filename?: string
+            timestamp: number
+          }
+      )[]
+    >
   }
 
   interface Window {

@@ -15,26 +15,10 @@ function App(): React.JSX.Element {
 
   useEffect(() => {
     // ① 初期履歴を1回取得
-    window.clipboardApi.getHistory().then((items: string[]) => {
-      setHistory(
-        items.map((content, i) => ({
-          id: `${Date.now()}-${i}`,
-          content,
-          timestamp: Date.now()
-        }))
-      )
-    })
+    window.clipboardApi.getHistory().then(setHistory)
 
     // ② 変更を購読
-    const unsubscribe = window.clipboardApi.onHistory((items: string[]) => {
-      setHistory(
-        items.map((content, i) => ({
-          id: `${Date.now()}-${i}`,
-          content,
-          timestamp: Date.now()
-        }))
-      )
-    })
+    const unsubscribe = window.clipboardApi.onHistory(setHistory)
 
     // ③ ブックマーク取得・購読
     window.bookmarkApi.get().then(setBookmarks)
@@ -77,8 +61,12 @@ function App(): React.JSX.Element {
         <HistoryPage
           items={history}
           bookmarks={bookmarks}
-          onCopy={(text) => window.clipboardApi.writeText(text)}
-          onDelete={(content) => window.clipboardApi.removeFromHistory(content)}
+          onCopy={(item) =>
+            item.type === 'text'
+              ? window.clipboardApi.writeText(item.content)
+              : window.clipboardApi.writeImage(item.dataUrl, item.filename)
+          }
+          onDelete={(id) => window.clipboardApi.removeFromHistory(id)}
           onAddBookmark={(content, timestamp) => window.bookmarkApi.add(content, timestamp)}
           onRemoveBookmark={(id) => window.bookmarkApi.remove(id)}
         />

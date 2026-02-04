@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
+import type { ClipboardItem } from '../main/clipboardTypes'
 
 // Custom APIs for renderer
 const api = {}
@@ -31,8 +32,8 @@ contextBridge.exposeInMainWorld('clipboardApi', {
 
   getHistory: () => ipcRenderer.invoke('clipboard:getHistory'),
 
-  onHistory: (callback: (history: string[]) => void) => {
-    const listener = (_: unknown, history: string[]) => {
+  onHistory: (callback: (history: ClipboardItem[]) => void) => {
+    const listener = (_: unknown, history: ClipboardItem[]) => {
       callback(history)
     }
 
@@ -47,8 +48,12 @@ contextBridge.exposeInMainWorld('clipboardApi', {
     ipcRenderer.invoke('clipboard:writeText', text)
   },
 
-  removeFromHistory: (content: string) => {
-    return ipcRenderer.invoke('clipboard:removeFromHistory', content)
+  writeImage: (dataUrl: string, filename?: string) => {
+    ipcRenderer.invoke('clipboard:writeImage', dataUrl, filename)
+  },
+
+  removeFromHistory: (id: string) => {
+    return ipcRenderer.invoke('clipboard:removeFromHistory', id)
   }
 })
 

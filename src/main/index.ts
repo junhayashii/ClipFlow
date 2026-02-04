@@ -1,11 +1,16 @@
-import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut } from 'electron'
-import { join } from 'path'
+import { app, shell, BrowserWindow, ipcMain, clipboard, globalShortcut, nativeImage } from 'electron'
+import { join, extname, basename } from 'path'
+import { fileURLToPath } from 'url'
+import fs from 'fs'
+import { execFileSync } from 'child_process'
+import { tmpdir } from 'os'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
 import { getSettings, updateSettings, initSettings } from './settings'
 import { createTray, destroyTray, initTray } from './tray'
 import { loadHistory, saveHistory } from './historyStore'
+import { type ClipboardItem, isSameClipboardItem } from './clipboardTypes'
 import {
   loadBookmarks,
   addBookmark as addBookmarkStore,
@@ -131,31 +136,301 @@ app.on('will-quit', () => {
 // Clipboard 監視 & 履歴
 // ==========================
 const MAX_HISTORY = 20
-let history: string[] = loadHistory()
-let lastText = ''
+let history: ClipboardItem[] = loadHistory()
+let lastSignature = ''
 
 // 統計（app ready 後に loadStatistics で初期化）
 let statisticsData: DailyData = {}
+const IMAGE_EXTENSIONS = new Set([
+  '.png',
+  '.jpg',
+  '.jpeg',
+  '.gif',
+  '.webp',
+  '.bmp',
+  '.tif',
+  '.tiff',
+  '.heic',
+  '.heif'
+])
 
-setInterval(() => {
-  const text = clipboard.readText()
+function createId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
 
-  if (!text || text === lastText) return
-  lastText = text
+function broadcastHistory() {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('clipboard:history', history)
+  })
+}
 
-  history = history.filter((item) => item !== text)
-  history.unshift(text)
+function addHistoryItem(item: ClipboardItem) {
+  history = history.filter((existing) => !isSameClipboardItem(existing, item))
+  history.unshift(item)
 
   if (history.length > MAX_HISTORY) {
     history = history.slice(0, MAX_HISTORY)
   }
 
   saveHistory(history)
-  statisticsData = recordCopyStats(statisticsData)
+}
 
-  BrowserWindow.getAllWindows().forEach((win) => {
-    win.webContents.send('clipboard:history', history)
+function readClipboardString(format: string) {
+  const raw = clipboard.read(format)
+  if (raw) return raw
+  try {
+    const buffer = clipboard.readBuffer(format)
+    if (buffer && buffer.length > 0) {
+      const utf8 = buffer.toString('utf8')
+      if (utf8 && (utf8.includes('file://') || utf8.includes('/'))) return utf8
+      const utf16 = buffer.toString('utf16le')
+      if (utf16 && (utf16.includes('file://') || utf16.includes('/'))) return utf16
+      return utf8 || utf16
+    }
+  } catch {
+    return ''
+  }
+  return ''
+}
+
+function normalizeFilePaths(value: unknown): string[] {
+  if (Array.isArray(value)) {
+    return value.filter((entry): entry is string => typeof entry === 'string')
+  }
+  if (typeof value === 'string') {
+    return [value]
+  }
+  return []
+}
+
+function parseBplistPaths(buffer: Buffer): string[] {
+  if (buffer.slice(0, 8).toString('utf8') !== 'bplist00') return []
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const parser = require('bplist-parser')
+    const parsed = parser.parseBuffer(buffer)
+    if (Array.isArray(parsed) && parsed.length > 0) {
+      return normalizeFilePaths(parsed[0])
+    }
+  } catch {
+    // ignore
+  }
+
+  if (process.platform !== 'darwin') return []
+
+  const tempPath = join(tmpdir(), `clipflow-${Date.now()}-${Math.random().toString(36).slice(2)}.plist`)
+  try {
+    fs.writeFileSync(tempPath, buffer)
+    const output = execFileSync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', tempPath], {
+      encoding: 'utf8'
+    })
+    const parsed = JSON.parse(output) as unknown
+    return normalizeFilePaths(parsed)
+  } catch {
+    return []
+  } finally {
+    try {
+      fs.unlinkSync(tempPath)
+    } catch {
+      // ignore
+    }
+  }
+}
+
+function extractFilePathFromBuffer(buffer: Buffer): string {
+  const bplistPaths = parseBplistPaths(buffer)
+  for (const candidate of bplistPaths) {
+    if (candidate.startsWith('file://')) {
+      try {
+        const filePath = fileURLToPath(candidate)
+        if (fs.existsSync(filePath)) return filePath
+      } catch {
+        // ignore
+      }
+    }
+    if (candidate.startsWith('/') && fs.existsSync(candidate)) {
+      return candidate
+    }
+  }
+
+  const candidates = [buffer.toString('utf8'), buffer.toString('utf16le')].map((text) =>
+    text.replace(/\u0000/g, '')
+  )
+
+  for (const text of candidates) {
+    const fileUrlMatch = text.match(/file:\/\/[^\s]+/i)
+    if (fileUrlMatch) {
+      try {
+        const filePath = fileURLToPath(fileUrlMatch[0])
+        if (fs.existsSync(filePath)) return filePath
+      } catch {
+        // ignore
+      }
+    }
+
+    const pathMatch = text.match(/\/[^\n]+?\.(png|jpe?g|gif|webp|bmp|tiff?)/i)
+    if (pathMatch && fs.existsSync(pathMatch[0])) {
+      return pathMatch[0]
+    }
+  }
+
+  return ''
+}
+
+function getFilePathFromClipboard(formats: string[]) {
+  const candidates = ['public.file-url', 'public.url', 'text/uri-list', 'NSFilenamesPboardType']
+  for (const format of candidates) {
+    if (!formats.includes(format)) {
+      try {
+        const buffer = clipboard.readBuffer(format)
+        if (!buffer || buffer.length === 0) continue
+      } catch {
+        continue
+      }
+    }
+
+    const raw = readClipboardString(format)
+    if (!raw) continue
+    const lines = raw
+      .replace(/\0/g, '')
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'))
+    for (const line of lines) {
+      if (line.startsWith('file://')) {
+        try {
+          const filePath = fileURLToPath(line)
+          if (fs.existsSync(filePath)) return filePath
+        } catch {
+          continue
+        }
+      }
+      if (line.startsWith('/')) {
+        if (fs.existsSync(line)) return line
+      }
+    }
+
+    try {
+      const buffer = clipboard.readBuffer(format)
+      if (buffer && buffer.length > 0) {
+        const extracted = extractFilePathFromBuffer(buffer)
+        if (extracted) return extracted
+      }
+    } catch {
+      // ignore
+    }
+  }
+  return ''
+}
+
+function loadImageFromFile(filePath: string) {
+  let image = nativeImage.createFromPath(filePath)
+  if (image.isEmpty()) {
+    try {
+      const buffer = fs.readFileSync(filePath)
+      image = nativeImage.createFromBuffer(buffer)
+    } catch {
+      return null
+    }
+  }
+  if (image.isEmpty()) return null
+  return image
+}
+
+function formatImageName(timestamp: number) {
+  const iso = new Date(timestamp).toISOString().replace('T', ' ').replace('Z', '')
+  const safe = iso.replace(/[:]/g, '-')
+  return `Image ${safe}`
+}
+
+setInterval(() => {
+  const formats = clipboard.availableFormats()
+  const hasFileFormat = formats.some((format) =>
+    ['public.file-url', 'public.url', 'text/uri-list', 'NSFilenamesPboardType'].includes(format)
+  )
+  const filePath = getFilePathFromClipboard(formats)
+  if (filePath) {
+    const ext = extname(filePath).toLowerCase()
+    if (!IMAGE_EXTENSIONS.has(ext)) {
+      const signature = `file:${filePath}`
+      if (signature !== lastSignature) lastSignature = signature
+      return
+    }
+
+    const fileImage = loadImageFromFile(filePath)
+    if (!fileImage) {
+      const signature = `file:${filePath}`
+      if (signature !== lastSignature) lastSignature = signature
+      return
+    }
+
+    const filename = basename(filePath)
+    const dataUrl = fileImage.toDataURL()
+    const signature = `image:${dataUrl}`
+    if (signature === lastSignature) return
+    lastSignature = signature
+
+    const size = fileImage.getSize()
+    addHistoryItem({
+      id: createId(),
+      type: 'image',
+      dataUrl,
+      width: size.width,
+      height: size.height,
+      filename,
+      timestamp: Date.now()
+    })
+
+    statisticsData = recordCopyStats(statisticsData)
+    broadcastHistory()
+    return
+  }
+  if (hasFileFormat) {
+    const signature = `file:unknown:${formats.join(',')}`
+    if (signature !== lastSignature) lastSignature = signature
+    return
+  }
+
+  const image = clipboard.readImage()
+  if (!image.isEmpty()) {
+    const timestamp = Date.now()
+    const dataUrl = image.toDataURL()
+    const signature = `image:${dataUrl}`
+    if (signature === lastSignature) return
+    lastSignature = signature
+
+    const size = image.getSize()
+    addHistoryItem({
+      id: createId(),
+      type: 'image',
+      dataUrl,
+      width: size.width,
+      height: size.height,
+      filename: formatImageName(timestamp),
+      timestamp
+    })
+
+    statisticsData = recordCopyStats(statisticsData)
+    broadcastHistory()
+    return
+  }
+
+  const text = clipboard.readText()
+  if (!text) return
+  const signature = `text:${text}`
+  if (signature === lastSignature) return
+  lastSignature = signature
+
+  addHistoryItem({
+    id: createId(),
+    type: 'text',
+    content: text,
+    timestamp: Date.now()
   })
+
+  statisticsData = recordCopyStats(statisticsData)
+  broadcastHistory()
 }, 1000)
 
 // ==========================
@@ -164,24 +439,52 @@ setInterval(() => {
 ipcMain.handle('clipboard:readText', () => clipboard.readText())
 
 ipcMain.handle('clipboard:writeText', (_, text: string) => {
+  if (!text) return
   clipboard.writeText(text)
 
-  history = history.filter((item) => item !== text)
-  history.unshift(text)
-  saveHistory(history)
+  addHistoryItem({
+    id: createId(),
+    type: 'text',
+    content: text,
+    timestamp: Date.now()
+  })
+  lastSignature = `text:${text}`
   statisticsData = recordCopyStats(statisticsData)
+  broadcastHistory()
+})
+
+ipcMain.handle('clipboard:writeImage', (_, dataUrl: string, filename?: string) => {
+  if (!dataUrl) return
+  const image = nativeImage.createFromDataURL(dataUrl)
+  if (image.isEmpty()) return
+
+  clipboard.writeImage(image)
+  const size = image.getSize()
+  const timestamp = Date.now()
+
+  addHistoryItem({
+    id: createId(),
+    type: 'image',
+    dataUrl,
+    width: size.width,
+    height: size.height,
+    filename: filename || formatImageName(timestamp),
+    timestamp
+  })
+
+  lastSignature = `image:${dataUrl}`
+  statisticsData = recordCopyStats(statisticsData)
+  broadcastHistory()
 })
 
 ipcMain.handle('clipboard:getHistory', () => {
   return history
 })
 
-ipcMain.handle('clipboard:removeFromHistory', (_, content: string) => {
-  history = history.filter((item) => item !== content)
+ipcMain.handle('clipboard:removeFromHistory', (_, id: string) => {
+  history = history.filter((item) => item.id !== id)
   saveHistory(history)
-  BrowserWindow.getAllWindows().forEach((win) => {
-    win.webContents.send('clipboard:history', history)
-  })
+  broadcastHistory()
   return history
 })
 

@@ -1,5 +1,6 @@
-import { Menu, BrowserWindow, clipboard, screen, systemPreferences } from 'electron'
+import { Menu, BrowserWindow, clipboard, screen, systemPreferences, nativeImage } from 'electron'
 import { execFile } from 'child_process'
+import type { ClipboardItem } from './clipboardTypes'
 
 let anchorWindow: BrowserWindow | null = null
 const MENU_OFFSET = { x: 2, y: -10 }
@@ -48,22 +49,37 @@ function getAnchorWindow(displayBounds: { x: number; y: number }) {
 }
 
 export function showClipboardMenu(
-  history: string[],
+  history: ClipboardItem[],
   win?: BrowserWindow,
   onPaste?: () => void
 ) {
   if (!history.length) return
 
-  const template = history.slice(0, 10).map((text) => ({
-    label: text.length > 50 ? text.slice(0, 50) + '…' : text,
-    click: () => {
-      clipboard.writeText(text)
-      pasteToFrontmostApp()
-      onPaste?.()
+  const template = history.slice(0, 10).map((item) => {
+    const label =
+      item.type === 'text'
+        ? item.content.length > 50
+          ? item.content.slice(0, 50) + '…'
+          : item.content
+        : item.filename
+          ? item.filename
+          : `Image ${item.width}x${item.height}`
 
-      win?.hide()
+    return {
+      label,
+      click: () => {
+        if (item.type === 'text') {
+          clipboard.writeText(item.content)
+        } else {
+          clipboard.writeImage(nativeImage.createFromDataURL(item.dataUrl))
+        }
+        pasteToFrontmostApp()
+        onPaste?.()
+
+        win?.hide()
+      }
     }
-  }))
+  })
 
   const menu = Menu.buildFromTemplate(template)
   const cursorPoint = screen.getCursorScreenPoint()
