@@ -5,14 +5,29 @@ import fs from 'fs'
 // 統計データの保存ファイル名
 const FILE_NAME = 'statistics.json'
 
+export type ClipCategory = 'text' | 'link' | 'code' | 'image'
+
+export interface TypeCounts {
+  text: number
+  link: number
+  code: number
+  image: number
+}
+
+function createEmptyTypeCounts(): TypeCounts {
+  return { text: 0, link: 0, code: 0, image: 0 }
+}
+
 // 1日のコピー/ペースト回数
 export interface DayCount {
   copy: number
   paste: number
+  copyTypes?: TypeCounts
+  pasteTypes?: TypeCounts
 }
 
 /** dateKey -> counts (dateKey = YYYY-MM-DD) */
-type DailyData = Record<string, DayCount>
+export type DailyData = Record<string, DayCount>
 
 // UI に渡す統計データの形
 export interface Statistics {
@@ -21,6 +36,8 @@ export interface Statistics {
   daily: Array<{ date: string; dateLabel: string; copy: number; paste: number }>
   weekly: Array<{ period: string; copy: number; paste: number }>
   monthly: Array<{ period: string; copy: number; paste: number }>
+  copyTypes: TypeCounts
+  pasteTypes: TypeCounts
 }
 
 // 2年分を上限として保持
@@ -60,9 +77,12 @@ export function loadStatistics(): DailyData {
       if (typeof key !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(key)) continue
       const v = val as unknown
       if (v && typeof v === 'object' && 'copy' in v && 'paste' in v) {
+        const raw = v as DayCount
         result[key] = {
-          copy: Number((v as DayCount).copy) || 0,
-          paste: Number((v as DayCount).paste) || 0
+          copy: Number(raw.copy) || 0,
+          paste: Number(raw.paste) || 0,
+          copyTypes: raw.copyTypes ?? createEmptyTypeCounts(),
+          pasteTypes: raw.pasteTypes ?? createEmptyTypeCounts()
         }
       }
     }
@@ -91,20 +111,50 @@ export function saveStatistics(data: DailyData): void {
   }
 }
 
-export function recordCopy(data: DailyData): DailyData {
+export function recordCopy(data: DailyData, type: ClipCategory): DailyData {
   // 今日のコピー回数を +1
   const key = toDateKey(new Date())
-  const cur = data[key] ?? { copy: 0, paste: 0 }
-  const next = { ...data, [key]: { ...cur, copy: cur.copy + 1 } }
+  const cur = data[key] ?? {
+    copy: 0,
+    paste: 0,
+    copyTypes: createEmptyTypeCounts(),
+    pasteTypes: createEmptyTypeCounts()
+  }
+  const nextCopyTypes = { ...(cur.copyTypes ?? createEmptyTypeCounts()) }
+  nextCopyTypes[type] += 1
+  const next = {
+    ...data,
+    [key]: {
+      ...cur,
+      copy: cur.copy + 1,
+      copyTypes: nextCopyTypes,
+      pasteTypes: cur.pasteTypes ?? createEmptyTypeCounts()
+    }
+  }
   saveStatistics(next)
   return next
 }
 
-export function recordPaste(data: DailyData): DailyData {
+export function recordPaste(data: DailyData, type: ClipCategory): DailyData {
   // 今日のペースト回数を +1
   const key = toDateKey(new Date())
-  const cur = data[key] ?? { copy: 0, paste: 0 }
-  const next = { ...data, [key]: { ...cur, paste: cur.paste + 1 } }
+  const cur = data[key] ?? {
+    copy: 0,
+    paste: 0,
+    copyTypes: createEmptyTypeCounts(),
+    pasteTypes: createEmptyTypeCounts()
+  }
+  const nextPasteTypes = { ...(cur.pasteTypes ?? createEmptyTypeCounts()) }
+  nextPasteTypes[type] += 1
+  const next = {
+    ...data,
+    [key]: {
+      ...cur,
+      paste: cur.paste + 1,
+      copyTypes: cur.copyTypes ?? createEmptyTypeCounts(),
+      pasteTypes: nextPasteTypes
+    }
+  }
   saveStatistics(next)
   return next
 }
@@ -130,9 +180,21 @@ export function getStatistics(data: DailyData): Statistics {
   const keys = Object.keys(data).sort()
   let totalCopy = 0
   let totalPaste = 0
+  const copyTypes = createEmptyTypeCounts()
+  const pasteTypes = createEmptyTypeCounts()
   keys.forEach((k) => {
     totalCopy += data[k].copy
     totalPaste += data[k].paste
+    const copyByType = data[k].copyTypes ?? createEmptyTypeCounts()
+    const pasteByType = data[k].pasteTypes ?? createEmptyTypeCounts()
+    copyTypes.text += copyByType.text
+    copyTypes.link += copyByType.link
+    copyTypes.code += copyByType.code
+    copyTypes.image += copyByType.image
+    pasteTypes.text += pasteByType.text
+    pasteTypes.link += pasteByType.link
+    pasteTypes.code += pasteByType.code
+    pasteTypes.image += pasteByType.image
   })
 
   // 直近30日の配列
@@ -200,6 +262,8 @@ export function getStatistics(data: DailyData): Statistics {
     totalPaste,
     daily,
     weekly,
-    monthly
+    monthly,
+    copyTypes,
+    pasteTypes
   }
 }

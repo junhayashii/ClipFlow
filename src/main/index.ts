@@ -24,6 +24,13 @@ import {
   getStatistics,
   type DailyData
 } from './statisticsStore'
+import { classifyClipboardItem, classifyTextContent } from './contentClassifier'
+import {
+  hasAccessibilityPermission,
+  markSyntheticPaste,
+  pasteToFrontmostApp,
+  shouldIgnoreSyntheticPaste
+} from './pasteUtils'
 import { showClipboardMenu } from './clipboardMenu'
 
 // ==========================
@@ -32,6 +39,8 @@ import { showClipboardMenu } from './clipboardMenu'
 let mainWindow: BrowserWindow | null = null
 
 let isQuitting = false
+let pasteShortcutRegistered = false
+let pasteShortcutLocked = false
 
 app.on('before-quit', () => {
   isQuitting = true
@@ -103,10 +112,15 @@ app.whenReady().then(() => {
   initTray(() => win)
 
   globalShortcut.register('Command+Shift+V', () => {
-    showClipboardMenu(history, undefined, () => {
-      statisticsData = recordPasteStats(statisticsData)
+    showClipboardMenu(history, undefined, (item) => {
+      statisticsData = recordPasteStats(statisticsData, classifyClipboardItem(item))
+      broadcastStatistics()
     })
   })
+
+  if (process.platform === 'darwin' && hasAccessibilityPermission()) {
+    registerPasteShortcut()
+  }
 
   if (getSettings().enableTray) {
     createTray()
@@ -167,6 +181,55 @@ function broadcastHistory() {
   BrowserWindow.getAllWindows().forEach((win) => {
     win.webContents.send('clipboard:history', history)
   })
+}
+
+function broadcastStatistics() {
+  const payload = getStatistics(statisticsData)
+  BrowserWindow.getAllWindows().forEach((win) => {
+    win.webContents.send('statistics:updated', payload)
+  })
+}
+
+function registerPasteShortcut() {
+  if (pasteShortcutRegistered || globalShortcut.isRegistered('Command+V')) return
+  globalShortcut.register('Command+V', handleGlobalPaste)
+  pasteShortcutRegistered = true
+}
+
+function unregisterPasteShortcut() {
+  if (!pasteShortcutRegistered) return
+  globalShortcut.unregister('Command+V')
+  pasteShortcutRegistered = false
+}
+
+function handleGlobalPaste() {
+  if (pasteShortcutLocked) return
+  pasteShortcutLocked = true
+
+  const ignoreCount = shouldIgnoreSyntheticPaste()
+
+  unregisterPasteShortcut()
+  markSyntheticPaste()
+  const ok = pasteToFrontmostApp()
+
+  if (!ignoreCount) {
+    setTimeout(() => {
+      const type = classifyClipboardForPaste()
+      statisticsData = recordPasteStats(statisticsData, type)
+      broadcastStatistics()
+    }, 0)
+  }
+
+  setTimeout(() => {
+    if (process.platform === 'darwin' && hasAccessibilityPermission()) {
+      registerPasteShortcut()
+    }
+    pasteShortcutLocked = false
+  }, 90)
+
+  if (!ok) {
+    pasteShortcutLocked = false
+  }
 }
 
 function addHistoryItem(item: ClipboardItem) {
@@ -247,6 +310,24 @@ function parseBplistPaths(buffer: Buffer): string[] {
     }
   }
 }
+
+function classifyClipboardForPaste() {
+  const formats = clipboard.availableFormats()
+  const filePath = getFilePathFromClipboard(formats)
+  if (filePath) {
+    const ext = extname(filePath).toLowerCase()
+    if (IMAGE_EXTENSIONS.has(ext)) return 'image'
+    return 'text'
+  }
+
+  const image = clipboard.readImage()
+  if (!image.isEmpty()) return 'image'
+
+  const text = clipboard.readText()
+  if (!text) return 'text'
+  return classifyTextContent(text)
+}
+
 
 function extractFilePathFromBuffer(buffer: Buffer): string {
   // bplist からのパス抽出を最優先
@@ -400,7 +481,8 @@ setInterval(() => {
       timestamp: Date.now()
     })
 
-    statisticsData = recordCopyStats(statisticsData)
+    statisticsData = recordCopyStats(statisticsData, 'image')
+    broadcastStatistics()
     broadcastHistory()
     return
   }
@@ -431,7 +513,8 @@ setInterval(() => {
       timestamp
     })
 
-    statisticsData = recordCopyStats(statisticsData)
+    statisticsData = recordCopyStats(statisticsData, 'image')
+    broadcastStatistics()
     broadcastHistory()
     return
   }
@@ -450,7 +533,8 @@ setInterval(() => {
     timestamp: Date.now()
   })
 
-  statisticsData = recordCopyStats(statisticsData)
+  statisticsData = recordCopyStats(statisticsData, classifyTextContent(text))
+  broadcastStatistics()
   broadcastHistory()
 }, 1000)
 
@@ -471,7 +555,8 @@ ipcMain.handle('clipboard:writeText', (_, text: string) => {
     timestamp: Date.now()
   })
   lastSignature = `text:${text}`
-  statisticsData = recordCopyStats(statisticsData)
+  statisticsData = recordCopyStats(statisticsData, classifyTextContent(text))
+  broadcastStatistics()
   broadcastHistory()
 })
 
@@ -496,7 +581,8 @@ ipcMain.handle('clipboard:writeImage', (_, dataUrl: string, filename?: string) =
   })
 
   lastSignature = `image:${dataUrl}`
-  statisticsData = recordCopyStats(statisticsData)
+  statisticsData = recordCopyStats(statisticsData, 'image')
+  broadcastStatistics()
   broadcastHistory()
 })
 

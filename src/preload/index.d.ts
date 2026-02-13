@@ -56,11 +56,14 @@ export interface Statistics {
   daily: Array<{ date: string; dateLabel: string; copy: number; paste: number }>
   weekly: Array<{ period: string; copy: number; paste: number }>
   monthly: Array<{ period: string; copy: number; paste: number }>
+  copyTypes: { text: number; link: number; code: number; image: number }
+  pasteTypes: { text: number; link: number; code: number; image: number }
 }
 
 // 統計 API
 export interface StatisticsApi {
   get(): Promise<Statistics>
+  onUpdate(callback: (stats: Statistics) => void): () => void
 }
 
 declare global {

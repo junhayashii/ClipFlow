@@ -25,6 +25,7 @@
     "@electron-toolkit/utils": "^4.0.0",
     "@tailwindcss/vite": "^4.1.18",
     "lucide-react": "^0.563.0",
+    "recharts": "^2.12.7",
     "tailwindcss": "^4.1.18"
   },
   "devDependencies": {

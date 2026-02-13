@@ -70,7 +70,18 @@ declare global {
         daily: Array<{ date: string; dateLabel: string; copy: number; paste: number }>
         weekly: Array<{ period: string; copy: number; paste: number }>
         monthly: Array<{ period: string; copy: number; paste: number }>
+        copyTypes: { text: number; link: number; code: number; image: number }
+        pasteTypes: { text: number; link: number; code: number; image: number }
       }>
+      onUpdate: (callback: (stats: {
+        totalCopy: number
+        totalPaste: number
+        daily: Array<{ date: string; dateLabel: string; copy: number; paste: number }>
+        weekly: Array<{ period: string; copy: number; paste: number }>
+        monthly: Array<{ period: string; copy: number; paste: number }>
+        copyTypes: { text: number; link: number; code: number; image: number }
+        pasteTypes: { text: number; link: number; code: number; image: number }
+      }) => void) => () => void
     }
   }
 }

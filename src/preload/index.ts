@@ -67,7 +67,14 @@ contextBridge.exposeInMainWorld('settingsApi', {
 
 // 統計 API
 contextBridge.exposeInMainWorld('statisticsApi', {
-  get: () => ipcRenderer.invoke('statistics:get')
+  get: () => ipcRenderer.invoke('statistics:get'),
+  onUpdate: (callback: (stats: unknown) => void) => {
+    const listener = (_: unknown, stats: unknown) => {
+      callback(stats)
+    }
+    ipcRenderer.on('statistics:updated', listener)
+    return () => ipcRenderer.removeListener('statistics:updated', listener)
+  }
 })
 
 // ブックマーク API

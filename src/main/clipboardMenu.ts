@@ -1,24 +1,11 @@
-import { Menu, BrowserWindow, clipboard, screen, systemPreferences, nativeImage } from 'electron'
-import { execFile } from 'child_process'
+import { Menu, BrowserWindow, clipboard, screen, nativeImage } from 'electron'
 import type { ClipboardItem } from './clipboardTypes'
+import { markSyntheticPaste, pasteToFrontmostApp } from './pasteUtils'
 
 // macOS のメニュー表示位置調整用（アンカーウィンドウ）
 let anchorWindow: BrowserWindow | null = null
 // カーソル位置から少しずらすためのオフセット
 const MENU_OFFSET = { x: 2, y: -10 }
-
-function pasteToFrontmostApp() {
-  // macOS でのみ、アクセシビリティ権限がある場合に Cmd+V を送る
-  if (process.platform !== 'darwin') return
-
-  const trusted = systemPreferences.isTrustedAccessibilityClient(true)
-  if (!trusted) return
-
-  execFile('/usr/bin/osascript', [
-    '-e',
-    'tell application "System Events" to keystroke "v" using command down'
-  ])
-}
 
 function getAnchorWindow(displayBounds: { x: number; y: number }) {
   // Menu.popup の位置調整用に 1px の透明ウィンドウを使う
@@ -55,7 +42,7 @@ function getAnchorWindow(displayBounds: { x: number; y: number }) {
 export function showClipboardMenu(
   history: ClipboardItem[],
   win?: BrowserWindow,
-  onPaste?: () => void
+  onPaste?: (item: ClipboardItem) => void
 ) {
   if (!history.length) return
 
@@ -79,8 +66,9 @@ export function showClipboardMenu(
         } else {
           clipboard.writeImage(nativeImage.createFromDataURL(item.dataUrl))
         }
+        markSyntheticPaste()
         pasteToFrontmostApp()
-        onPaste?.()
+        onPaste?.(item)
 
         win?.hide()
       }

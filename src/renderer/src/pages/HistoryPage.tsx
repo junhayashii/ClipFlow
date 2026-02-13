@@ -393,7 +393,7 @@ export default function HistoryPage({
 
       {previewItem && previewItem.type === 'image' && (
         <div
-          className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/90 backdrop-blur-xl transition-opacity duration-300"
+          className="fixed inset-0 z-10000 flex items-center justify-center bg-black/90 backdrop-blur-xl transition-opacity duration-300"
           onClick={() => setPreviewItem(null)}
         >
           <button
